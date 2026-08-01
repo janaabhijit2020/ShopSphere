@@ -1,0 +1,29 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Database backups
+*.sql
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Backend
+Backend/target/
+Backend/.mvn/wrapper/maven-wrapper.jar
+
+# Frontend
+shopsphere-frontend/node_modules/
+shopsphere-frontend/dist/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
