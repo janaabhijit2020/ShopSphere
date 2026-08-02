@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:8080/api/payments";
+const API_BASE_URL =
+  "https://shopsphere-xwok.onrender.com/api/payments";
 
 export const makePayment = async (orderId, paymentMethod) => {
   const token = localStorage.getItem("token");
