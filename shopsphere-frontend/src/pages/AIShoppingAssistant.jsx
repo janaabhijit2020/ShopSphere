@@ -23,8 +23,16 @@ import axios from "axios";
 
 import { getAllProducts } from "../services/productService";
 
+// ============================================================
+// DEPLOYED SHOPSPHERE BACKEND
+// ============================================================
+
 const AI_BACKEND_URL =
-  "https://shopsphere-backend-xgnj.onrender.com/api";
+  "https://shopsphere-xwok.onrender.com/api";
+
+// ============================================================
+// STARTER MESSAGE
+// ============================================================
 
 const starterMessages = [
   {
@@ -34,20 +42,31 @@ const starterMessages = [
   },
 ];
 
+// ============================================================
+// COMPONENT
+// ============================================================
+
 function AIShoppingAssistant() {
-  const [messages, setMessages] = useState(starterMessages);
+  const [messages, setMessages] =
+    useState(starterMessages);
 
-  const [input, setInput] = useState("");
+  const [input, setInput] =
+    useState("");
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] =
+    useState([]);
 
-  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingProducts, setLoadingProducts] =
+    useState(true);
 
-  const [sending, setSending] = useState(false);
+  const [sending, setSending] =
+    useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const messagesEndRef = useRef(null);
+  const messagesEndRef =
+    useRef(null);
 
   // ============================================================
   // LOAD PRODUCTS
@@ -59,11 +78,13 @@ function AIShoppingAssistant() {
         setLoadingProducts(true);
         setError("");
 
-        const response = await getAllProducts();
+        const response =
+          await getAllProducts();
 
-        const productData = Array.isArray(response.data)
-          ? response.data
-          : [];
+        const productData =
+          Array.isArray(response.data)
+            ? response.data
+            : [];
 
         setProducts(productData);
       } catch (error) {
@@ -98,55 +119,62 @@ function AIShoppingAssistant() {
   // ============================================================
 
   const handleSend = async () => {
-    const userMessage = input.trim();
+    const userMessage =
+      input.trim();
 
-    if (!userMessage || sending) {
+    if (
+      !userMessage ||
+      sending
+    ) {
       return;
     }
 
     // Add user message immediately
-    setMessages((previousMessages) => [
-      ...previousMessages,
-      {
-        role: "user",
-        text: userMessage,
-      },
-    ]);
+    setMessages(
+      (previousMessages) => [
+        ...previousMessages,
+        {
+          role: "user",
+          text: userMessage,
+        },
+      ]
+    );
 
     setInput("");
     setSending(true);
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token");
 
-      /*
-       * IMPORTANT:
-       *
-       * Existing ShopSphere APIs continue using:
-       *
-       * shopsphere-xwok.onrender.com
-       *
-       * Only the AI request uses:
-       *
-       * shopsphere-backend-xgnj.onrender.com
-       */
+      // ========================================================
+      // POST /api/ai/chat
+      //
+      // Full URL:
+      //
+      // https://shopsphere-xwok.onrender.com/api/ai/chat
+      // ========================================================
 
-      const response = await axios.post(
-        `${AI_BACKEND_URL}/ai/chat`,
-        {
-          message: userMessage,
-          products: products,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && {
-              Authorization: `Bearer ${token}`,
-            }),
+      const response =
+        await axios.post(
+          `${AI_BACKEND_URL}/ai/chat`,
+          {
+            message: userMessage,
+            products: products,
           },
-        }
-      );
+          {
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              ...(token && {
+                Authorization:
+                  `Bearer ${token}`,
+              }),
+            },
+          }
+        );
 
       console.log(
         "AI backend response:",
@@ -159,13 +187,15 @@ function AIShoppingAssistant() {
         response.data?.message ||
         "Sorry, I could not generate a response.";
 
-      setMessages((previousMessages) => [
-        ...previousMessages,
-        {
-          role: "assistant",
-          text: assistantReply,
-        },
-      ]);
+      setMessages(
+        (previousMessages) => [
+          ...previousMessages,
+          {
+            role: "assistant",
+            text: assistantReply,
+          },
+        ]
+      );
     } catch (error) {
       console.error(
         "AI Shopping Assistant error:",
@@ -175,32 +205,44 @@ function AIShoppingAssistant() {
       let errorMessage =
         "Sorry, the AI Shopping Assistant could not generate a response.";
 
-      if (error.response?.status === 401) {
+      if (
+        error.response?.status === 401
+      ) {
         errorMessage =
           "Your session has expired. Please login again.";
-      } else if (error.response?.status === 403) {
+      } else if (
+        error.response?.status === 403
+      ) {
         errorMessage =
           "You are not authorized to use the AI Shopping Assistant.";
-      } else if (error.response?.status === 429) {
+      } else if (
+        error.response?.status === 429
+      ) {
         errorMessage =
           "The AI service has reached its usage limit. Please try again later.";
-      } else if (error.response?.data?.message) {
+      } else if (
+        error.response?.data?.message
+      ) {
         errorMessage =
           error.response.data.message;
-      } else if (error.response?.data?.response) {
+      } else if (
+        error.response?.data?.response
+      ) {
         errorMessage =
           error.response.data.response;
       }
 
       setError(errorMessage);
 
-      setMessages((previousMessages) => [
-        ...previousMessages,
-        {
-          role: "assistant",
-          text: errorMessage,
-        },
-      ]);
+      setMessages(
+        (previousMessages) => [
+          ...previousMessages,
+          {
+            role: "assistant",
+            text: errorMessage,
+          },
+        ]
+      );
     } finally {
       setSending(false);
     }
@@ -225,9 +267,10 @@ function AIShoppingAssistant() {
   // QUICK SUGGESTION
   // ============================================================
 
-  const handleSuggestion = (suggestion) => {
-    setInput(suggestion);
-  };
+  const handleSuggestion =
+    (suggestion) => {
+      setInput(suggestion);
+    };
 
   // ============================================================
   // UI
@@ -237,11 +280,14 @@ function AIShoppingAssistant() {
     <Box
       sx={{
         minHeight: "100vh",
+
         py: {
           xs: 3,
           md: 5,
         },
-        backgroundColor: "#f5f7fb",
+
+        backgroundColor:
+          "#f5f7fb",
       }}
     >
       <Container maxWidth="md">
@@ -257,9 +303,13 @@ function AIShoppingAssistant() {
               xs: 3,
               md: 4,
             },
+
             mb: 3,
+
             borderRadius: 4,
-            textAlign: "center",
+
+            textAlign:
+              "center",
           }}
         >
           <SmartToyOutlinedIcon
@@ -283,8 +333,10 @@ function AIShoppingAssistant() {
               mt: 1,
             }}
           >
-            Get intelligent product recommendations
-            and shopping assistance powered by AI.
+            Get intelligent product
+            recommendations and
+            shopping assistance
+            powered by AI.
           </Typography>
         </Paper>
 
@@ -298,7 +350,9 @@ function AIShoppingAssistant() {
             sx={{
               mb: 2,
             }}
-            onClose={() => setError("")}
+            onClose={() =>
+              setError("")
+            }
           >
             {error}
           </Alert>
@@ -321,45 +375,69 @@ function AIShoppingAssistant() {
                 xs: "55vh",
                 md: "60vh",
               },
+
               overflowY: "auto",
+
               p: 2.5,
-              backgroundColor: "#ffffff",
+
+              backgroundColor:
+                "#ffffff",
             }}
           >
             {loadingProducts ? (
               <Box
                 sx={{
                   height: "100%",
+
                   display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
+
+                  flexDirection:
+                    "column",
+
+                  justifyContent:
+                    "center",
+
+                  alignItems:
+                    "center",
+
                   gap: 2,
                 }}
               >
                 <CircularProgress />
 
-                <Typography color="text.secondary">
-                  Loading ShopSphere products...
+                <Typography
+                  color="text.secondary"
+                >
+                  Loading ShopSphere
+                  products...
                 </Typography>
               </Box>
             ) : (
-              <Stack spacing={2.5}>
+              <Stack
+                spacing={2.5}
+              >
 
                 {/* ==================================================
                     MESSAGES
                 =================================================== */}
 
                 {messages.map(
-                  (message, index) => (
+                  (
+                    message,
+                    index
+                  ) => (
                     <Box
                       key={index}
                       sx={{
-                        display: "flex",
+                        display:
+                          "flex",
+
                         justifyContent:
-                          message.role === "user"
+                          message.role ===
+                          "user"
                             ? "flex-end"
                             : "flex-start",
+
                         gap: 1,
                       }}
                     >
@@ -383,34 +461,46 @@ function AIShoppingAssistant() {
                       <Paper
                         elevation={0}
                         sx={{
-                          maxWidth: "78%",
+                          maxWidth:
+                            "78%",
+
                           p: 2,
-                          borderRadius: 3,
+
+                          borderRadius:
+                            3,
 
                           backgroundColor:
-                            message.role === "user"
+                            message.role ===
+                            "user"
                               ? "primary.main"
                               : "#f1f5f9",
 
                           color:
-                            message.role === "user"
+                            message.role ===
+                            "user"
                               ? "primary.contrastText"
                               : "text.primary",
                         }}
                       >
                         <Typography
                           sx={{
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
+                            whiteSpace:
+                              "pre-wrap",
+
+                            wordBreak:
+                              "break-word",
                           }}
                         >
-                          {message.text}
+                          {
+                            message.text
+                          }
                         </Typography>
                       </Paper>
 
                       {/* USER AVATAR */}
 
-                      {message.role === "user" && (
+                      {message.role ===
+                        "user" && (
                         <Avatar
                           sx={{
                             bgcolor:
@@ -431,8 +521,12 @@ function AIShoppingAssistant() {
                 {sending && (
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display:
+                        "flex",
+
+                      alignItems:
+                        "center",
+
                       gap: 1,
                     }}
                   >
@@ -449,7 +543,10 @@ function AIShoppingAssistant() {
                       elevation={0}
                       sx={{
                         p: 1.5,
-                        borderRadius: 3,
+
+                        borderRadius:
+                          3,
+
                         backgroundColor:
                           "#f1f5f9",
                       }}
@@ -461,7 +558,12 @@ function AIShoppingAssistant() {
                   </Box>
                 )}
 
-                <div ref={messagesEndRef} />
+                <div
+                  ref={
+                    messagesEndRef
+                  }
+                />
+
               </Stack>
             )}
           </Box>
@@ -475,36 +577,62 @@ function AIShoppingAssistant() {
           <Box
             sx={{
               p: 2,
-              display: "flex",
+
+              display:
+                "flex",
+
               gap: 1.5,
-              alignItems: "center",
+
+              alignItems:
+                "center",
             }}
           >
             <TextField
               fullWidth
+
               multiline
+
               maxRows={4}
-              placeholder="Ask about products, recommendations, stock, or orders..."
-              value={input}
-              onChange={(event) =>
-                setInput(event.target.value)
+
+              placeholder={
+                "Ask about products, recommendations, stock, or orders..."
               }
-              onKeyDown={handleKeyDown}
+
+              value={input}
+
+              onChange={
+                (event) =>
+                  setInput(
+                    event.target.value
+                  )
+              }
+
+              onKeyDown={
+                handleKeyDown
+              }
+
               disabled={
-                loadingProducts || sending
+                loadingProducts ||
+                sending
               }
             />
 
             <Button
               variant="contained"
-              onClick={handleSend}
+
+              onClick={
+                handleSend
+              }
+
               disabled={
                 !input.trim() ||
                 loadingProducts ||
                 sending
               }
+
               sx={{
                 minWidth: 52,
+
                 height: 56,
               }}
             >
@@ -521,7 +649,9 @@ function AIShoppingAssistant() {
           elevation={1}
           sx={{
             mt: 3,
+
             p: 2.5,
+
             borderRadius: 3,
           }}
         >
@@ -539,7 +669,9 @@ function AIShoppingAssistant() {
               xs: "column",
               sm: "row",
             }}
+
             spacing={1}
+
             flexWrap="wrap"
           >
             {[
@@ -549,28 +681,39 @@ function AIShoppingAssistant() {
               "I need a product under ₹2000",
               "How do I track my order?",
               "How can I cancel an order?",
-            ].map((suggestion) => (
-              <Button
-                key={suggestion}
-                variant="outlined"
-                size="small"
-                startIcon={
-                  <ShoppingBagOutlinedIcon />
-                }
-                onClick={() =>
-                  handleSuggestion(
+            ].map(
+              (suggestion) => (
+                <Button
+                  key={
                     suggestion
-                  )
-                }
-                sx={{
-                  textTransform: "none",
-                }}
-              >
-                {suggestion}
-              </Button>
-            ))}
+                  }
+
+                  variant="outlined"
+
+                  size="small"
+
+                  startIcon={
+                    <ShoppingBagOutlinedIcon />
+                  }
+
+                  onClick={() =>
+                    handleSuggestion(
+                      suggestion
+                    )
+                  }
+
+                  sx={{
+                    textTransform:
+                      "none",
+                  }}
+                >
+                  {suggestion}
+                </Button>
+              )
+            )}
           </Stack>
         </Paper>
+
       </Container>
     </Box>
   );
