@@ -54,35 +54,58 @@ public class SecurityConfig {
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // Authentication APIs are public
+                        // ==========================================
+                        // PUBLIC AUTHENTICATION APIs
+                        // ==========================================
                         .requestMatchers(
                                 "/api/auth/**"
                         ).permitAll()
 
-                        // Public product APIs
+
+                        // ==========================================
+                        // PUBLIC AI SHOPPING ASSISTANT
+                        // ==========================================
+                        .requestMatchers(
+                                "/api/ai/**"
+                        ).permitAll()
+
+
+                        // ==========================================
+                        // PUBLIC PRODUCT APIs
+                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/products/**"
                         ).permitAll()
 
-                        // Public category APIs
+
+                        // ==========================================
+                        // PUBLIC CATEGORY APIs
+                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/categories/**"
                         ).permitAll()
 
-                        // Public product review APIs
+
+                        // ==========================================
+                        // PUBLIC PRODUCT REVIEW APIs
+                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/reviews/product/**"
                         ).permitAll()
 
-                        // All remaining APIs require JWT login
+
+                        // ==========================================
+                        // EVERYTHING ELSE REQUIRES JWT
+                        // ==========================================
                         .anyRequest()
                         .authenticated()
                 )
 
-                // Add JWT filter before Spring Security's login filter
+                // Add JWT filter before Spring Security's
+                // UsernamePasswordAuthenticationFilter
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
