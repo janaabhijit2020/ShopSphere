@@ -23,16 +23,19 @@ import axios from "axios";
 
 import { getAllProducts } from "../services/productService";
 
-// ============================================================
-// DEPLOYED SHOPSPHERE BACKEND
-// ============================================================
+/*
+ * IMPORTANT
+ *
+ * This is the SAME deployed backend that you
+ * already confirmed is working:
+ *
+ * https://shopsphere-xwok.onrender.com/api/ai/chat
+ *
+ * Do not use the xgnj backend here.
+ */
 
 const AI_BACKEND_URL =
   "https://shopsphere-xwok.onrender.com/api";
-
-// ============================================================
-// STARTER MESSAGE
-// ============================================================
 
 const starterMessages = [
   {
@@ -41,10 +44,6 @@ const starterMessages = [
       "Hello! 👋 I am the ShopSphere AI Shopping Assistant. Ask me to recommend products, find products, check stock, or get help with your orders.",
   },
 ];
-
-// ============================================================
-// COMPONENT
-// ============================================================
 
 function AIShoppingAssistant() {
   const [messages, setMessages] =
@@ -69,7 +68,7 @@ function AIShoppingAssistant() {
     useRef(null);
 
   // ============================================================
-  // LOAD PRODUCTS
+  // LOAD SHOPSPHERE PRODUCTS
   // ============================================================
 
   useEffect(() => {
@@ -87,6 +86,11 @@ function AIShoppingAssistant() {
             : [];
 
         setProducts(productData);
+
+        console.log(
+          "ShopSphere products loaded:",
+          productData
+        );
       } catch (error) {
         console.error(
           "Unable to load ShopSphere products:",
@@ -96,6 +100,8 @@ function AIShoppingAssistant() {
         setError(
           "The assistant could not load ShopSphere products."
         );
+
+        setProducts([]);
       } finally {
         setLoadingProducts(false);
       }
@@ -115,7 +121,7 @@ function AIShoppingAssistant() {
   }, [messages, sending]);
 
   // ============================================================
-  // SEND MESSAGE TO AI BACKEND
+  // SEND MESSAGE TO DEPLOYED AI BACKEND
   // ============================================================
 
   const handleSend = async () => {
@@ -145,16 +151,15 @@ function AIShoppingAssistant() {
     setError("");
 
     try {
-      const token =
-        localStorage.getItem("token");
-
-      // ========================================================
-      // POST /api/ai/chat
-      //
-      // Full URL:
-      //
-      // https://shopsphere-xwok.onrender.com/api/ai/chat
-      // ========================================================
+      /*
+       * Send request to:
+       *
+       * https://shopsphere-xwok.onrender.com/api/ai/chat
+       *
+       * The products are sent to the AI backend so the
+       * Gemini model can answer using the real ShopSphere
+       * product catalog.
+       */
 
       const response =
         await axios.post(
@@ -167,11 +172,6 @@ function AIShoppingAssistant() {
             headers: {
               "Content-Type":
                 "application/json",
-
-              ...(token && {
-                Authorization:
-                  `Bearer ${token}`,
-              }),
             },
           }
         );
@@ -203,7 +203,7 @@ function AIShoppingAssistant() {
       );
 
       let errorMessage =
-        "Sorry, the AI Shopping Assistant could not generate a response.";
+        "The AI Shopping Assistant is temporarily unavailable. Please try again later.";
 
       if (
         error.response?.status === 401
@@ -221,15 +221,15 @@ function AIShoppingAssistant() {
         errorMessage =
           "The AI service has reached its usage limit. Please try again later.";
       } else if (
-        error.response?.data?.message
-      ) {
-        errorMessage =
-          error.response.data.message;
-      } else if (
         error.response?.data?.response
       ) {
         errorMessage =
           error.response.data.response;
+      } else if (
+        error.response?.data?.message
+      ) {
+        errorMessage =
+          error.response.data.message;
       }
 
       setError(errorMessage);
@@ -308,8 +308,7 @@ function AIShoppingAssistant() {
 
             borderRadius: 4,
 
-            textAlign:
-              "center",
+            textAlign: "center",
           }}
         >
           <SmartToyOutlinedIcon
@@ -334,9 +333,8 @@ function AIShoppingAssistant() {
             }}
           >
             Get intelligent product
-            recommendations and
-            shopping assistance
-            powered by AI.
+            recommendations and shopping
+            assistance powered by AI.
           </Typography>
         </Paper>
 
@@ -413,9 +411,7 @@ function AIShoppingAssistant() {
                 </Typography>
               </Box>
             ) : (
-              <Stack
-                spacing={2.5}
-              >
+              <Stack spacing={2.5}>
 
                 {/* ==================================================
                     MESSAGES
@@ -563,7 +559,6 @@ function AIShoppingAssistant() {
                     messagesEndRef
                   }
                 />
-
               </Stack>
             )}
           </Box>
@@ -578,8 +573,7 @@ function AIShoppingAssistant() {
             sx={{
               p: 2,
 
-              display:
-                "flex",
+              display: "flex",
 
               gap: 1.5,
 
@@ -594,17 +588,14 @@ function AIShoppingAssistant() {
 
               maxRows={4}
 
-              placeholder={
-                "Ask about products, recommendations, stock, or orders..."
-              }
+              placeholder="Ask about products, recommendations, stock, or orders..."
 
               value={input}
 
-              onChange={
-                (event) =>
-                  setInput(
-                    event.target.value
-                  )
+              onChange={(event) =>
+                setInput(
+                  event.target.value
+                )
               }
 
               onKeyDown={
@@ -632,7 +623,6 @@ function AIShoppingAssistant() {
 
               sx={{
                 minWidth: 52,
-
                 height: 56,
               }}
             >
@@ -684,9 +674,7 @@ function AIShoppingAssistant() {
             ].map(
               (suggestion) => (
                 <Button
-                  key={
-                    suggestion
-                  }
+                  key={suggestion}
 
                   variant="outlined"
 
@@ -713,7 +701,6 @@ function AIShoppingAssistant() {
             )}
           </Stack>
         </Paper>
-
       </Container>
     </Box>
   );
