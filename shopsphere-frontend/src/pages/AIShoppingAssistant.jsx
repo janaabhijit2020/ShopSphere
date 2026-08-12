@@ -19,401 +19,236 @@ import SendIcon from "@mui/icons-material/Send";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 
-import {
-  getAllProducts,
-} from "../services/productService";
+import axios from "axios";
+
+import { getAllProducts } from "../services/productService";
+
+const AI_BACKEND_URL =
+  "https://shopsphere-backend-xgnj.onrender.com/api";
 
 const starterMessages = [
   {
     role: "assistant",
     text:
-      "Hello! I am the ShopSphere AI Shopping Assistant. Ask me to recommend products, find products by name, check stock, or help with orders.",
+      "Hello! 👋 I am the ShopSphere AI Shopping Assistant. Ask me to recommend products, find products, check stock, or get help with your orders.",
   },
 ];
 
 function AIShoppingAssistant() {
-  const [messages, setMessages] =
-    useState(starterMessages);
+  const [messages, setMessages] = useState(starterMessages);
 
-  const [input, setInput] =
-    useState("");
+  const [input, setInput] = useState("");
 
-  const [products, setProducts] =
-    useState([]);
+  const [products, setProducts] = useState([]);
 
-  const [
-    loadingProducts,
-    setLoadingProducts,
-  ] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
-  const [sending, setSending] =
-    useState(false);
+  const [sending, setSending] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const messagesEndRef =
-    useRef(null);
+  const messagesEndRef = useRef(null);
 
-  // ==========================================
+  // ============================================================
   // LOAD PRODUCTS
-  // ==========================================
+  // ============================================================
 
   useEffect(() => {
-    const loadProducts =
-      async () => {
-        try {
-          setLoadingProducts(true);
+    const loadProducts = async () => {
+      try {
+        setLoadingProducts(true);
+        setError("");
 
-          const response =
-            await getAllProducts();
+        const response = await getAllProducts();
 
-          setProducts(
-            Array.isArray(
-              response.data
-            )
-              ? response.data
-              : []
-          );
-        } catch (error) {
-          console.error(
-            "Unable to load products:",
-            error
-          );
+        const productData = Array.isArray(response.data)
+          ? response.data
+          : [];
 
-          setError(
-            "The assistant could not load products."
-          );
-        } finally {
-          setLoadingProducts(false);
-        }
-      };
+        setProducts(productData);
+      } catch (error) {
+        console.error(
+          "Unable to load ShopSphere products:",
+          error
+        );
+
+        setError(
+          "The assistant could not load ShopSphere products."
+        );
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
 
     loadProducts();
   }, []);
 
-  // ==========================================
+  // ============================================================
   // AUTO SCROLL
-  // ==========================================
+  // ============================================================
 
   useEffect(() => {
-    messagesEndRef.current
-      ?.scrollIntoView({
-        behavior: "smooth",
-      });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages, sending]);
 
-  // ==========================================
-  // FIND MATCHING PRODUCTS
-  // ==========================================
+  // ============================================================
+  // SEND MESSAGE TO AI BACKEND
+  // ============================================================
 
-  const findMatchingProducts =
-    (message) => {
-      const text =
-        message.toLowerCase();
+  const handleSend = async () => {
+    const userMessage = input.trim();
 
-      const words =
-        text
-          .replace(
-            /[^a-z0-9\s]/g,
-            " "
-          )
-          .split(/\s+/)
-          .filter(
-            (word) =>
-              word.length >= 3
-          );
+    if (!userMessage || sending) {
+      return;
+    }
 
-      return products.filter(
-        (product) => {
-          const productText =
-            `${product.name} ${product.description} ${product.categoryName}`
-              .toLowerCase();
+    // Add user message immediately
+    setMessages((previousMessages) => [
+      ...previousMessages,
+      {
+        role: "user",
+        text: userMessage,
+      },
+    ]);
 
-          return words.some(
-            (word) =>
-              productText.includes(
-                word
-              )
-          );
-        }
-      );
-    };
+    setInput("");
+    setSending(true);
+    setError("");
 
-  // ==========================================
-  // CREATE ASSISTANT RESPONSE
-  // ==========================================
+    try {
+      const token = localStorage.getItem("token");
 
-  const createAssistantReply =
-    (userMessage) => {
-      const text =
-        userMessage
-          .toLowerCase()
-          .trim();
+      /*
+       * IMPORTANT:
+       *
+       * Existing ShopSphere APIs continue using:
+       *
+       * shopsphere-xwok.onrender.com
+       *
+       * Only the AI request uses:
+       *
+       * shopsphere-backend-xgnj.onrender.com
+       */
 
-      // GREETING
-
-      if (
-        text.includes("hello") ||
-        text.includes("hi") ||
-        text.includes("hey")
-      ) {
-        return (
-          "Hello! 👋 I can help you discover products, check availability, recommend products, and answer questions about ShopSphere orders."
-        );
-      }
-
-      // ORDER TRACKING
-
-      if (
-        text.includes("track") &&
-        text.includes("order")
-      ) {
-        return (
-          "You can track your order from the My Orders page. The order status may be PLACED, PROCESSING, SHIPPED, DELIVERED, or CANCELLED."
-        );
-      }
-
-      // CANCEL ORDER
-
-      if (
-        text.includes("cancel") &&
-        text.includes("order")
-      ) {
-        return (
-          "Open the My Orders page and select the order you want to cancel. If cancellation is available, you can cancel it there."
-        );
-      }
-
-      // PAYMENT HELP
-
-      if (
-        text.includes("payment")
-      ) {
-        return (
-          "You can complete payment during checkout. After payment is completed, your order will appear in My Orders."
-        );
-      }
-
-      // STOCK CHECK
-
-      if (
-        text.includes("stock") ||
-        text.includes("available")
-      ) {
-        const inStockProducts =
-          products.filter(
-            (product) =>
-              product.stock > 0
-          );
-
-        if (
-          inStockProducts.length === 0
-        ) {
-          return (
-            "Currently, no products are available in stock."
-          );
-        }
-
-        const productList =
-          inStockProducts
-            .slice(0, 5)
-            .map(
-              (product) =>
-                `${product.name} (${product.stock} available)`
-            )
-            .join(", ");
-
-        return (
-          `We currently have ${inStockProducts.length} products in stock. Some available products are: ${productList}.`
-        );
-      }
-
-      // PRODUCT RECOMMENDATION
-
-      if (
-        text.includes("recommend") ||
-        text.includes("suggest") ||
-        text.includes("best")
-      ) {
-        const recommendedProducts =
-          products
-            .filter(
-              (product) =>
-                product.stock > 0
-            )
-            .sort(
-              (
-                firstProduct,
-                secondProduct
-              ) =>
-                Number(
-                  firstProduct.price
-                ) -
-                Number(
-                  secondProduct.price
-                )
-            )
-            .slice(0, 5);
-
-        if (
-          recommendedProducts.length === 0
-        ) {
-          return (
-            "I could not find an in-stock product to recommend right now."
-          );
-        }
-
-        const productList =
-          recommendedProducts
-            .map(
-              (product) =>
-                `${product.name} — ₹${Number(
-                  product.price
-                ).toLocaleString(
-                  "en-IN"
-                )}`
-            )
-            .join(", ");
-
-        return (
-          `Based on the products currently available, you may consider: ${productList}. You can open the Products page to view their details.`
-        );
-      }
-
-      // PRODUCT SEARCH
-
-      const matches =
-        findMatchingProducts(
-          userMessage
-        );
-
-      if (
-        matches.length > 0
-      ) {
-        const productList =
-          matches
-            .slice(0, 5)
-            .map(
-              (product) =>
-                `${product.name} — ₹${Number(
-                  product.price
-                ).toLocaleString(
-                  "en-IN"
-                )} (${
-                  product.stock > 0
-                    ? "In stock"
-                    : "Out of stock"
-                })`
-            )
-            .join(", ");
-
-        return (
-          `I found these products: ${productList}.`
-        );
-      }
-
-      // DEFAULT RESPONSE
-
-      return (
-        "I can help you find products, recommend available items, check stock, and answer questions about orders. Try asking: “Recommend a product”, “What is in stock?”, or “How do I track my order?”"
-      );
-    };
-
-  // ==========================================
-  // SEND MESSAGE
-  // ==========================================
-
-  const handleSend =
-    async () => {
-      const userMessage =
-        input.trim();
-
-      if (
-        !userMessage ||
-        sending
-      ) {
-        return;
-      }
-
-      setMessages(
-        (previousMessages) => [
-          ...previousMessages,
-          {
-            role: "user",
-            text: userMessage,
+      const response = await axios.post(
+        `${AI_BACKEND_URL}/ai/chat`,
+        {
+          message: userMessage,
+          products: products,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && {
+              Authorization: `Bearer ${token}`,
+            }),
           },
-        ]
+        }
       );
 
-      setInput("");
-
-      setSending(true);
-
-      await new Promise(
-        (resolve) =>
-          setTimeout(
-            resolve,
-            500
-          )
+      console.log(
+        "AI backend response:",
+        response.data
       );
 
       const assistantReply =
-        createAssistantReply(
-          userMessage
-        );
+        response.data?.response ||
+        response.data?.content ||
+        response.data?.message ||
+        "Sorry, I could not generate a response.";
 
-      setMessages(
-        (previousMessages) => [
-          ...previousMessages,
-          {
-            role: "assistant",
-            text: assistantReply,
-          },
-        ]
+      setMessages((previousMessages) => [
+        ...previousMessages,
+        {
+          role: "assistant",
+          text: assistantReply,
+        },
+      ]);
+    } catch (error) {
+      console.error(
+        "AI Shopping Assistant error:",
+        error
       );
 
-      setSending(false);
-    };
+      let errorMessage =
+        "Sorry, the AI Shopping Assistant could not generate a response.";
 
-  // ==========================================
-  // ENTER KEY
-  // ==========================================
-
-  const handleKeyDown =
-    (event) => {
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey
-      ) {
-        event.preventDefault();
-
-        handleSend();
+      if (error.response?.status === 401) {
+        errorMessage =
+          "Your session has expired. Please login again.";
+      } else if (error.response?.status === 403) {
+        errorMessage =
+          "You are not authorized to use the AI Shopping Assistant.";
+      } else if (error.response?.status === 429) {
+        errorMessage =
+          "The AI service has reached its usage limit. Please try again later.";
+      } else if (error.response?.data?.message) {
+        errorMessage =
+          error.response.data.message;
+      } else if (error.response?.data?.response) {
+        errorMessage =
+          error.response.data.response;
       }
-    };
 
-  // ==========================================
+      setError(errorMessage);
+
+      setMessages((previousMessages) => [
+        ...previousMessages,
+        {
+          role: "assistant",
+          text: errorMessage,
+        },
+      ]);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // ============================================================
+  // ENTER KEY
+  // ============================================================
+
+  const handleKeyDown = (event) => {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+
+      handleSend();
+    }
+  };
+
+  // ============================================================
+  // QUICK SUGGESTION
+  // ============================================================
+
+  const handleSuggestion = (suggestion) => {
+    setInput(suggestion);
+  };
+
+  // ============================================================
   // UI
-  // ==========================================
+  // ============================================================
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
-
         py: {
           xs: 3,
           md: 5,
         },
-
-        backgroundColor:
-          "#f5f7fb",
+        backgroundColor: "#f5f7fb",
       }}
     >
-      <Container
-        maxWidth="md"
-      >
-        {/* HEADER */}
+      <Container maxWidth="md">
+
+        {/* ======================================================
+            HEADER
+        ======================================================= */}
 
         <Paper
           elevation={2}
@@ -422,13 +257,9 @@ function AIShoppingAssistant() {
               xs: 3,
               md: 4,
             },
-
             mb: 3,
-
             borderRadius: 4,
-
-            textAlign:
-              "center",
+            textAlign: "center",
           }}
         >
           <SmartToyOutlinedIcon
@@ -452,13 +283,14 @@ function AIShoppingAssistant() {
               mt: 1,
             }}
           >
-            Ask questions and discover
-            products available on
-            ShopSphere.
+            Get intelligent product recommendations
+            and shopping assistance powered by AI.
           </Typography>
         </Paper>
 
-        {/* ERROR */}
+        {/* ======================================================
+            ERROR
+        ======================================================= */}
 
         {error && (
           <Alert
@@ -466,20 +298,21 @@ function AIShoppingAssistant() {
             sx={{
               mb: 2,
             }}
+            onClose={() => setError("")}
           >
             {error}
           </Alert>
         )}
 
-        {/* CHAT */}
+        {/* ======================================================
+            CHAT
+        ======================================================= */}
 
         <Paper
           elevation={2}
           sx={{
             borderRadius: 4,
-
-            overflow:
-              "hidden",
+            overflow: "hidden",
           }}
         >
           <Box
@@ -488,68 +321,51 @@ function AIShoppingAssistant() {
                 xs: "55vh",
                 md: "60vh",
               },
-
-              overflowY:
-                "auto",
-
+              overflowY: "auto",
               p: 2.5,
-
-              backgroundColor:
-                "#ffffff",
+              backgroundColor: "#ffffff",
             }}
           >
             {loadingProducts ? (
               <Box
                 sx={{
                   height: "100%",
-
                   display: "flex",
-
-                  flexDirection:
-                    "column",
-
-                  justifyContent:
-                    "center",
-
-                  alignItems:
-                    "center",
-
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
                   gap: 2,
                 }}
               >
                 <CircularProgress />
 
-                <Typography
-                  color="text.secondary"
-                >
-                  Loading ShopSphere
-                  products...
+                <Typography color="text.secondary">
+                  Loading ShopSphere products...
                 </Typography>
               </Box>
             ) : (
-              <Stack
-                spacing={2.5}
-              >
+              <Stack spacing={2.5}>
+
+                {/* ==================================================
+                    MESSAGES
+                =================================================== */}
+
                 {messages.map(
-                  (
-                    message,
-                    index
-                  ) => (
+                  (message, index) => (
                     <Box
                       key={index}
                       sx={{
-                        display:
-                          "flex",
-
+                        display: "flex",
                         justifyContent:
-                          message.role ===
-                          "user"
+                          message.role === "user"
                             ? "flex-end"
                             : "flex-start",
-
                         gap: 1,
                       }}
                     >
+
+                      {/* AI AVATAR */}
+
                       {message.role ===
                         "assistant" && (
                         <Avatar
@@ -562,44 +378,39 @@ function AIShoppingAssistant() {
                         </Avatar>
                       )}
 
+                      {/* MESSAGE */}
+
                       <Paper
                         elevation={0}
                         sx={{
-                          maxWidth:
-                            "78%",
-
+                          maxWidth: "78%",
                           p: 2,
-
-                          borderRadius:
-                            3,
+                          borderRadius: 3,
 
                           backgroundColor:
-                            message.role ===
-                            "user"
+                            message.role === "user"
                               ? "primary.main"
                               : "#f1f5f9",
 
                           color:
-                            message.role ===
-                            "user"
+                            message.role === "user"
                               ? "primary.contrastText"
                               : "text.primary",
                         }}
                       >
                         <Typography
                           sx={{
-                            whiteSpace:
-                              "pre-wrap",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
                           }}
                         >
-                          {
-                            message.text
-                          }
+                          {message.text}
                         </Typography>
                       </Paper>
 
-                      {message.role ===
-                        "user" && (
+                      {/* USER AVATAR */}
+
+                      {message.role === "user" && (
                         <Avatar
                           sx={{
                             bgcolor:
@@ -613,15 +424,15 @@ function AIShoppingAssistant() {
                   )
                 )}
 
+                {/* ==================================================
+                    AI LOADING
+                =================================================== */}
+
                 {sending && (
                   <Box
                     sx={{
-                      display:
-                        "flex",
-
-                      alignItems:
-                        "center",
-
+                      display: "flex",
+                      alignItems: "center",
                       gap: 1,
                     }}
                   >
@@ -634,77 +445,64 @@ function AIShoppingAssistant() {
                       <SmartToyOutlinedIcon />
                     </Avatar>
 
-                    <CircularProgress
-                      size={22}
-                    />
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 3,
+                        backgroundColor:
+                          "#f1f5f9",
+                      }}
+                    >
+                      <CircularProgress
+                        size={22}
+                      />
+                    </Paper>
                   </Box>
                 )}
 
-                <div
-                  ref={
-                    messagesEndRef
-                  }
-                />
+                <div ref={messagesEndRef} />
               </Stack>
             )}
           </Box>
 
           <Divider />
 
-          {/* INPUT */}
+          {/* ======================================================
+              INPUT
+          ======================================================= */}
 
           <Box
             sx={{
               p: 2,
-
-              display:
-                "flex",
-
+              display: "flex",
               gap: 1.5,
-
-              alignItems:
-                "center",
+              alignItems: "center",
             }}
           >
             <TextField
               fullWidth
-
-              placeholder={
-                "Ask about products, stock, recommendations, or orders..."
-              }
-
+              multiline
+              maxRows={4}
+              placeholder="Ask about products, recommendations, stock, or orders..."
               value={input}
-
-              onChange={
-                (event) =>
-                  setInput(
-                    event.target.value
-                  )
+              onChange={(event) =>
+                setInput(event.target.value)
               }
-
-              onKeyDown={
-                handleKeyDown
-              }
-
+              onKeyDown={handleKeyDown}
               disabled={
-                loadingProducts ||
-                sending
+                loadingProducts || sending
               }
             />
 
             <Button
               variant="contained"
-
-              onClick={
-                handleSend
-              }
-
+              onClick={handleSend}
               disabled={
                 !input.trim() ||
                 loadingProducts ||
                 sending
               }
-
               sx={{
                 minWidth: 52,
                 height: 56,
@@ -715,15 +513,15 @@ function AIShoppingAssistant() {
           </Box>
         </Paper>
 
-        {/* SUGGESTIONS */}
+        {/* ======================================================
+            SUGGESTIONS
+        ======================================================= */}
 
         <Paper
           elevation={1}
           sx={{
             mt: 3,
-
             p: 2.5,
-
             borderRadius: 3,
           }}
         >
@@ -741,47 +539,36 @@ function AIShoppingAssistant() {
               xs: "column",
               sm: "row",
             }}
-
             spacing={1}
-
             flexWrap="wrap"
           >
             {[
               "Recommend a product",
-
               "What products are in stock?",
-
+              "Which headphones do you recommend?",
+              "I need a product under ₹2000",
               "How do I track my order?",
-
               "How can I cancel an order?",
-            ].map(
-              (suggestion) => (
-                <Button
-                  key={suggestion}
-
-                  variant="outlined"
-
-                  size="small"
-
-                  startIcon={
-                    <ShoppingBagOutlinedIcon />
-                  }
-
-                  onClick={() =>
-                    setInput(
-                      suggestion
-                    )
-                  }
-
-                  sx={{
-                    textTransform:
-                      "none",
-                  }}
-                >
-                  {suggestion}
-                </Button>
-              )
-            )}
+            ].map((suggestion) => (
+              <Button
+                key={suggestion}
+                variant="outlined"
+                size="small"
+                startIcon={
+                  <ShoppingBagOutlinedIcon />
+                }
+                onClick={() =>
+                  handleSuggestion(
+                    suggestion
+                  )
+                }
+                sx={{
+                  textTransform: "none",
+                }}
+              >
+                {suggestion}
+              </Button>
+            ))}
           </Stack>
         </Paper>
       </Container>

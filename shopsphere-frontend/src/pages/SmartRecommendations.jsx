@@ -18,42 +18,32 @@ import {
   Typography,
 } from "@mui/material";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import {
   getAllProducts,
 } from "../services/productService";
 
 function SmartRecommendations() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
-  const [
-    products,
-    setProducts,
-  ] = useState([]);
+  const [products, setProducts] =
+    useState([]);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [
-    error,
-    setError,
-  ] = useState("");
+  const [error, setError] =
+    useState("");
 
-  useEffect(() => {
-    loadRecommendations();
-  }, []);
+  // ==========================================
+  // LOAD RECOMMENDATIONS
+  // ==========================================
 
   const loadRecommendations =
     async () => {
       try {
         setLoading(true);
-
         setError("");
 
         const response =
@@ -66,16 +56,22 @@ function SmartRecommendations() {
             ? response.data
             : [];
 
+        /*
+         * Simple recommendation logic:
+         *
+         * 1. Only products with stock
+         * 2. Sort by available stock
+         * 3. Show top 12
+         */
+
         const recommendedProducts =
           [...allProducts]
-
             .filter(
               (product) =>
                 Number(
                   product.stock
                 ) > 0
             )
-
             .sort(
               (
                 firstProduct,
@@ -83,17 +79,12 @@ function SmartRecommendations() {
               ) =>
                 Number(
                   secondProduct.stock
-                )
-                -
+                ) -
                 Number(
                   firstProduct.stock
                 )
             )
-
-            .slice(
-              0,
-              12
-            );
+            .slice(0, 12);
 
         setProducts(
           recommendedProducts
@@ -107,7 +98,7 @@ function SmartRecommendations() {
         setError(
           error.response?.data
             ?.message ||
-          "Unable to load smart product recommendations."
+            "Unable to load smart product recommendations."
         );
 
         setProducts([]);
@@ -116,72 +107,84 @@ function SmartRecommendations() {
       }
     };
 
+  // ==========================================
+  // INITIAL LOAD
+  // ==========================================
+
+  useEffect(() => {
+    loadRecommendations();
+  }, []);
+
+  // ==========================================
+  // LOADING
+  // ==========================================
+
   if (loading) {
     return (
       <Box
         sx={{
-          minHeight:
-            "70vh",
-
-          display:
-            "flex",
-
-          justifyContent:
-            "center",
-
-          alignItems:
-            "center",
+          minHeight: "70vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
-        <CircularProgress />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          <CircularProgress />
+
+          <Typography
+            color="text.secondary"
+          >
+            Finding recommended products...
+          </Typography>
+        </Box>
       </Box>
     );
   }
 
+  // ==========================================
+  // UI
+  // ==========================================
+
   return (
     <Box
       sx={{
-        minHeight:
-          "100vh",
-
+        minHeight: "100vh",
         py: {
           xs: 3,
           md: 5,
         },
-
-        backgroundColor:
-          "#f5f7fb",
+        backgroundColor: "#f5f7fb",
       }}
     >
-      <Container
-        maxWidth="xl"
-      >
+      <Container maxWidth="xl">
+
         {/* HEADER */}
 
         <Paper
           elevation={2}
-
           sx={{
             p: {
               xs: 3,
               md: 4,
             },
-
             mb: 4,
-
-            borderRadius:
-              4,
-
-            textAlign:
-              "center",
+            borderRadius: 4,
+            textAlign: "center",
           }}
         >
           <Typography
             variant="h4"
             fontWeight="bold"
           >
-            Smart Product
-            Recommendations
+            Smart Product Recommendations
           </Typography>
 
           <Typography
@@ -190,25 +193,18 @@ function SmartRecommendations() {
               mt: 1,
             }}
           >
-            Discover available
-            ShopSphere products
-            selected using stock,
-            availability, and
-            product data.
+            Discover ShopSphere products
+            currently available in stock.
           </Typography>
 
           <Button
             variant="outlined"
-
             onClick={
               loadRecommendations
             }
-
             sx={{
               mt: 2,
-
-              textTransform:
-                "none",
+              textTransform: "none",
             }}
           >
             Refresh Recommendations
@@ -220,11 +216,9 @@ function SmartRecommendations() {
         {error && (
           <Alert
             severity="error"
-
             sx={{
               mb: 3,
             }}
-
             onClose={() =>
               setError("")
             }
@@ -239,23 +233,17 @@ function SmartRecommendations() {
           products.length === 0 && (
             <Paper
               elevation={2}
-
               sx={{
                 p: 6,
-
-                borderRadius:
-                  4,
-
-                textAlign:
-                  "center",
+                borderRadius: 4,
+                textAlign: "center",
               }}
             >
               <Typography
                 variant="h6"
                 fontWeight="bold"
               >
-                No recommendations
-                available
+                No recommendations available
               </Typography>
 
               <Typography
@@ -264,9 +252,8 @@ function SmartRecommendations() {
                   mt: 1,
                 }}
               >
-                Add products with
-                available stock to
-                see recommendations.
+                Add products with available
+                stock to see recommendations.
               </Typography>
             </Paper>
           )}
@@ -280,10 +267,7 @@ function SmartRecommendations() {
           {products.map(
             (product) => (
               <Grid
-                key={
-                  product.id
-                }
-
+                key={product.id}
                 size={{
                   xs: 12,
                   sm: 6,
@@ -293,72 +277,61 @@ function SmartRecommendations() {
               >
                 <Card
                   elevation={2}
-
                   sx={{
-                    height:
-                      "100%",
-
-                    display:
-                      "flex",
-
+                    height: "100%",
+                    display: "flex",
                     flexDirection:
                       "column",
-
-                    borderRadius:
-                      3,
-
-                    overflow:
-                      "hidden",
+                    borderRadius: 3,
+                    overflow: "hidden",
                   }}
                 >
+
+                  {/* IMAGE */}
+
                   <CardMedia
                     component="img"
-
                     height="210"
-
                     image={
                       product.imageUrl ||
                       "https://placehold.co/600x400?text=ShopSphere"
                     }
-
                     alt={
                       product.name
                     }
-
-                    onError={
-                      (event) => {
-                        event.currentTarget.src =
-                          "https://placehold.co/600x400?text=ShopSphere";
-                      }
-                    }
+                    onError={(
+                      event
+                    ) => {
+                      event.currentTarget.src =
+                        "https://placehold.co/600x400?text=ShopSphere";
+                    }}
                   />
 
                   <CardContent
                     sx={{
                       flexGrow: 1,
-
-                      display:
-                        "flex",
-
+                      display: "flex",
                       flexDirection:
                         "column",
                     }}
                   >
+
+                    {/* CATEGORY */}
+
                     <Chip
                       label={
                         product.categoryName ||
                         "Product"
                       }
-
                       size="small"
-
                       sx={{
                         alignSelf:
                           "flex-start",
-
                         mb: 1.5,
                       }}
                     />
+
+                    {/* NAME */}
 
                     <Typography
                       variant="h6"
@@ -369,24 +342,19 @@ function SmartRecommendations() {
                       }
                     </Typography>
 
+                    {/* DESCRIPTION */}
+
                     <Typography
                       variant="body2"
                       color="text.secondary"
-
                       sx={{
                         mt: 1,
-
                         display:
                           "-webkit-box",
-
-                        WebkitLineClamp:
-                          2,
-
+                        WebkitLineClamp: 2,
                         WebkitBoxOrient:
                           "vertical",
-
-                        overflow:
-                          "hidden",
+                        overflow: "hidden",
                       }}
                     >
                       {
@@ -394,64 +362,64 @@ function SmartRecommendations() {
                       }
                     </Typography>
 
+                    {/* DETAILS */}
+
                     <Box
                       sx={{
                         mt: "auto",
-
                         pt: 2,
                       }}
                     >
+
+                      {/* PRICE */}
+
                       <Typography
                         variant="h6"
                         fontWeight="bold"
                       >
                         ₹
-                        {
-                          Number(
-                            product.price
-                          ).toLocaleString(
-                            "en-IN"
-                          )
-                        }
+                        {Number(
+                          product.price
+                        ).toLocaleString(
+                          "en-IN"
+                        )}
                       </Typography>
+
+                      {/* STOCK */}
 
                       <Typography
                         variant="body2"
                         color="success.main"
-
                         fontWeight="medium"
-
                         sx={{
                           mt: 0.5,
                         }}
                       >
-                        In stock:
-                        {" "}
+                        In stock:{" "}
                         {
                           product.stock
                         }
                       </Typography>
 
+                      {/* VIEW PRODUCT */}
+
                       <Button
                         fullWidth
-
                         variant="contained"
-
                         onClick={() =>
                           navigate(
                             `/products/${product.id}`
                           )
                         }
-
                         sx={{
                           mt: 2,
-
                           textTransform:
                             "none",
                         }}
                       >
                         View Product
                       </Button>
+
                     </Box>
                   </CardContent>
                 </Card>
